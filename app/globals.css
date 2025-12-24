@@ -17,6 +17,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "kern" 1, "liga" 1;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* Prevent flash of unstyled content */
+html {
+  background: #020617;
+}
+
+#__next {
+  min-height: 100vh;
 }
 
 @keyframes spin-slow {

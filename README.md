@@ -1,4 +1,4 @@
-# EonAI Hero Section
+# LegalMind Hero Section
 
 High-end, cinematic interface built with Next.js, TypeScript, Tailwind CSS, and Framer Motion. Features real 3D video backgrounds and premium glassmorphism effects.
 
@@ -67,7 +67,7 @@ The interface uses a real video file for the central sphere. To add your video:
    public/assets/brain-video.mp4
    ```
 
-3. **Update the video path** in `components/RealHighEndInterface.tsx` if needed:
+3. **Update the video path** in `components/SoftInterface.tsx` if needed:
    ```tsx
    src="/assets/brain-video.mp4"
    ```
@@ -91,24 +91,19 @@ The interface uses a real video file for the central sphere. To add your video:
 │   ├── layout.tsx
 │   └── page.tsx
 ├── components/
-│   ├── HeroSection.tsx          # Desktop version
-│   ├── RealHighEndInterface.tsx # Mobile version with video
-│   ├── OrbitalMobileInterface.tsx
-│   └── MobileAIInterface.tsx
+│   ├── HeroSection.tsx    # Desktop version
+│   └── SoftInterface.tsx  # Mobile version with soft design
 ├── public/
 │   └── assets/
-│       └── brain-video.mp4       # Your video file goes here
+│       └── brain-video.mp4 # Your video file goes here
 ├── package.json
 └── tailwind.config.ts
 ```
 
 ## Components
 
-- **FixedMobileInterface** - Main mobile interface with proper video masking
-- **InteractiveMobileInterface** - Interactive version with glow effect
-- **HeroSection** - Desktop version with CSS sphere
-- **OrbitalMobileInterface** - Alternative orbital UI (CSS-based)
-- **MobileAIInterface** - Bottom sheet mobile interface
+- **SoftInterface** - Main mobile interface with soft indigo gradient, aurora effects, and frosted glass buttons
+- **HeroSection** - Desktop version with CSS sphere and gradient backgrounds
 
 ## Deployment
 
@@ -129,7 +124,7 @@ git remote add origin https://github.com/Eugen1189/Only.git
 git add .
 
 # Commit changes
-git commit -m "Initial commit: EonAI interface"
+git commit -m "Initial commit: LegalMind interface"
 
 # Push to main branch
 git push -u origin main

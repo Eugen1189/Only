@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "./speech-recognition-polyfill";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -9,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "EonAI - A Digital Brain That Operates for You",
+  title: "LegalMind - A Digital Brain That Operates for You",
   description: "Built for founders, creators, and teams who need clarity, speed, and control.",
   appleWebApp: {
     capable: true,

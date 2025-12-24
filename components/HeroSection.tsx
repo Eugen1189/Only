@@ -18,7 +18,7 @@ const HeroSection = () => {
           <div className="w-8 h-8 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
             <span className="text-xs font-bold">AI</span>
           </div>
-          <span className="font-semibold tracking-wide">EonAI</span>
+          <span className="font-semibold tracking-wide">LegalMind</span>
         </div>
         
         {/* Pill button with menu */}
