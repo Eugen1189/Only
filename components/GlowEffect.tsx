@@ -17,13 +17,26 @@ const GlowEffect = () => {
     // Show glow only after client loads
     setVisible(true);
 
-    const handleMove = (e: PointerEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
+    const handleMove = (e: PointerEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0]?.clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0]?.clientY : e.clientY;
+      
+      if (clientX !== undefined && clientY !== undefined) {
+        mouseX.set(clientX);
+        mouseY.set(clientY);
+      }
     };
 
-    window.addEventListener("pointermove", handleMove);
-    return () => window.removeEventListener("pointermove", handleMove);
+    // Support both pointer and touch events for mobile
+    window.addEventListener("pointermove", handleMove as EventListener);
+    window.addEventListener("touchmove", handleMove as EventListener);
+    window.addEventListener("touchstart", handleMove as EventListener);
+    
+    return () => {
+      window.removeEventListener("pointermove", handleMove as EventListener);
+      window.removeEventListener("touchmove", handleMove as EventListener);
+      window.removeEventListener("touchstart", handleMove as EventListener);
+    };
   }, [mouseX, mouseY]);
 
   if (!visible) return null;

@@ -18,6 +18,14 @@ body {
   font-feature-settings: "kern" 1, "liga" 1;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+  /* Enable touch manipulation for better mobile performance */
+  touch-action: manipulation;
+}
+
+/* Improve touch targets for mobile */
+button, a {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Prevent flash of unstyled content */

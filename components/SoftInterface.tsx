@@ -22,10 +22,16 @@ interface SoftButtonProps {
 // Soft Glass button style with haptic feedback
 const SoftButton = ({ icon, label, onClick }: SoftButtonProps) => (
   <button 
-    className="flex flex-col items-center gap-2 group"
-    onClick={() => {
+    className="flex flex-col items-center gap-2 group touch-manipulation"
+    onClick={(e) => {
+      e.preventDefault();
       triggerHaptic(hapticPatterns.click);
       onClick?.();
+    }}
+    onTouchStart={(e) => {
+      // Trigger haptic on touch start for better mobile experience
+      e.preventDefault();
+      triggerHaptic(hapticPatterns.click);
     }}
   >
     <div className="w-16 h-16 rounded-2xl bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-lg active:scale-95 transition-all duration-300 group-hover:border-purple-400/30 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.2)]">
@@ -64,12 +70,26 @@ export default function SoftInterface() {
     // Check if browser APIs are available
     if (typeof window === "undefined") return;
     
-    const handleMove = (e: PointerEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
+    const handleMove = (e: PointerEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0]?.clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0]?.clientY : e.clientY;
+      
+      if (clientX !== undefined && clientY !== undefined) {
+        mouseX.set(clientX);
+        mouseY.set(clientY);
+      }
     };
-    window.addEventListener("pointermove", handleMove);
-    return () => window.removeEventListener("pointermove", handleMove);
+
+    // Support both pointer and touch events for mobile
+    window.addEventListener("pointermove", handleMove as EventListener);
+    window.addEventListener("touchmove", handleMove as EventListener);
+    window.addEventListener("touchstart", handleMove as EventListener);
+    
+    return () => {
+      window.removeEventListener("pointermove", handleMove as EventListener);
+      window.removeEventListener("touchmove", handleMove as EventListener);
+      window.removeEventListener("touchstart", handleMove as EventListener);
+    };
   }, [mouseX, mouseY]);
 
   // Update app state when listening starts
@@ -244,12 +264,25 @@ export default function SoftInterface() {
                     loop 
                     muted 
                     playsInline
+                    preload="auto"
                     className="w-full h-full object-cover scale-110 opacity-90 mix-blend-screen"
-                    onError={() => setVideoError(true)}
+                    onError={(e) => {
+                      console.warn('Video load error, using fallback');
+                      setVideoError(true);
+                    }}
+                    onLoadedData={() => {
+                      // Video loaded successfully, try to play
+                      if (videoRef.current) {
+                        videoRef.current.play().catch((err) => {
+                          console.warn('Video autoplay failed:', err);
+                          setVideoError(true);
+                        });
+                      }
+                    }}
                   >
                     {/* Try local video first */}
                     <source src="/assets/brain-video.mp4" type="video/mp4" />
-                    {/* Fallback to public AI-themed video */}
+                    {/* Fallback to public AI-themed video - smaller file */}
                     <source src="https://videos.pexels.com/video-files/3045163/3045163-uhd_2560_1440_30fps.mp4" type="video/mp4" />
                   </video>
                 )}
@@ -378,12 +411,20 @@ export default function SoftInterface() {
 
           {/* Microphone button */}
           <button 
-            className={`w-full max-w-sm h-16 rounded-[2rem] p-[1px] shadow-[0_4px_20px_rgba(0,0,0,0.2)] active:scale-95 transition-transform ${
+            className={`w-full max-w-sm h-16 rounded-[2rem] p-[1px] shadow-[0_4px_20px_rgba(0,0,0,0.2)] active:scale-95 transition-transform touch-manipulation ${
               listening 
                 ? "bg-gradient-to-r from-red-400/40 to-pink-400/40" 
                 : "bg-gradient-to-r from-purple-400/30 to-blue-400/30"
             }`}
-            onClick={handleMicClick}
+            onClick={(e) => {
+              e.preventDefault();
+              handleMicClick();
+            }}
+            onTouchStart={(e) => {
+              // Trigger haptic on touch start
+              e.preventDefault();
+              triggerHaptic(hapticPatterns.click);
+            }}
           >
               <div className="w-full h-full rounded-[2rem] bg-[#1e293b]/60 backdrop-blur-xl flex items-center px-4 relative overflow-hidden group">
                   <div className="absolute inset-0 bg-white/5 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500" />
