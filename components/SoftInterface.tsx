@@ -10,6 +10,7 @@ import { triggerHaptic, hapticPatterns } from "@/utils/haptics";
 import { AudioVisualizer } from "@/utils/audioVisualizer";
 import ParticleSystem from "@/components/ParticleSystem";
 import GlowEffect from "@/components/GlowEffect";
+import VideoCanvas from "@/components/VideoCanvas";
 
 type AppState = "idle" | "listening" | "processing" | "speaking";
 
@@ -288,6 +289,16 @@ export default function SoftInterface() {
                 )}
                 
                 {videoError && (
+                  // Canvas-based video replacement - always works, looks like video
+                  <VideoCanvas 
+                    width={260} 
+                    height={260} 
+                    className="w-full h-full opacity-90"
+                  />
+                )}
+                
+                {/* Old CSS fallback - kept as backup but disabled */}
+                {false && (
                   <motion.div 
                     className="w-full h-full bg-gradient-to-br from-purple-900/40 to-indigo-900/40 relative overflow-hidden"
                     animate={{
