@@ -52,6 +52,7 @@ export default function SoftInterface() {
   const [appState, setAppState] = useState<AppState>("idle");
   const [audioVolume, setAudioVolume] = useState(0);
   const [transcript, setTranscript] = useState("");
+  const [videoError, setVideoError] = useState(false);
 
   // Speech recognition - safe wrapper
   const {
@@ -169,7 +170,7 @@ export default function SoftInterface() {
     [1, 1.15]
   );
 
-  const [videoError, setVideoError] = useState(false);
+  // Video removed - using Canvas instead
 
   const handleMicClick = () => {
     if (!mounted || typeof window === "undefined") return;
@@ -258,7 +259,7 @@ export default function SoftInterface() {
                 boxShadow: `0 0 60px ${getSphereColor()}`,
               }}
             >
-                {!videoError && (
+                {!videoError ? (
                   <video 
                     ref={videoRef}
                     autoPlay 
@@ -268,7 +269,7 @@ export default function SoftInterface() {
                     preload="auto"
                     className="w-full h-full object-cover scale-110 opacity-90 mix-blend-screen"
                     onError={(e) => {
-                      console.warn('Video load error, using fallback');
+                      console.warn('Video load error, using Canvas fallback');
                       setVideoError(true);
                     }}
                     onLoadedData={() => {
@@ -281,15 +282,10 @@ export default function SoftInterface() {
                       }
                     }}
                   >
-                    {/* Try local video first */}
-                    <source src="/assets/brain-video.mp4" type="video/mp4" />
-                    {/* Fallback - will use CSS animation if this also fails */}
-                    <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+                    <source src="/assets/document_5359566328627760596.mp4" type="video/mp4" />
                   </video>
-                )}
-                
-                {videoError && (
-                  // Canvas-based video replacement - always works, looks like video
+                ) : (
+                  // Canvas fallback - shows if video fails to load
                   <VideoCanvas 
                     width={260} 
                     height={260} 
