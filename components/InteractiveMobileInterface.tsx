@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
-import { Mic, Sparkles, MessageSquare, Image, Music, Settings, Menu } from "lucide-react";
+import { Mic, Sparkles, MessageSquare, Image as ImageIcon, Music, Settings, Menu } from "lucide-react";
 
 interface OrbitalButtonProps {
   icon: React.ReactNode;
@@ -183,8 +183,7 @@ const InteractiveMobileInterface = () => {
             {/* We move them outside the small circle (w-280), attaching to large container (w-380) */}
             {/* Changed position to more distant points */}
             <OrbitalButton icon={<MessageSquare size={20} />} label="Chat" position="top-4 left-4" delay={0} />
-            {/* eslint-disable-next-line jsx-a11y/alt-text */}
-            <OrbitalButton icon={<Image size={20} />} label="Imagine" position="top-4 right-4" delay={0.1} />
+            <OrbitalButton icon={<ImageIcon size={20} />} label="Imagine" position="top-4 right-4" delay={0.1} />
             <OrbitalButton icon={<Music size={20} />} label="Audio" position="bottom-12 left-6" delay={0.2} />
             <OrbitalButton icon={<Settings size={20} />} label="Config" position="bottom-12 right-6" delay={0.3} />
 
