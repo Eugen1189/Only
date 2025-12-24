@@ -116,6 +116,22 @@ export default function SoftInterface() {
     }
   }, [listening, appState, speechTranscript]);
 
+  // Video playback rate based on state
+  useEffect(() => {
+    if (videoRef.current) {
+      switch (appState) {
+        case "processing":
+          videoRef.current.playbackRate = 2.0;
+          break;
+        case "listening":
+          videoRef.current.playbackRate = 1.5;
+          break;
+        default:
+          videoRef.current.playbackRate = 1.0;
+      }
+    }
+  }, [appState]);
+
   // Audio visualization
   useEffect(() => {
     if (!mounted || !speechMounted || typeof navigator === "undefined" || !navigator.mediaDevices) return;
