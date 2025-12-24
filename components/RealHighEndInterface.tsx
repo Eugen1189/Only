@@ -164,6 +164,7 @@ const RealHighEndInterface = () => {
 
             {/* Orbital buttons (over video) */}
             <OrbitalButton icon={<MessageSquare size={18} />} label="Chat" position="top-0 left-0" delay={0} />
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <OrbitalButton icon={<Image size={18} />} label="Imagine" position="top-0 right-0" delay={0.1} />
             <OrbitalButton icon={<Music size={18} />} label="Audio" position="bottom-10 left-4" delay={0.2} />
             <OrbitalButton icon={<Settings size={18} />} label="Config" position="bottom-10 right-4" delay={0.3} />

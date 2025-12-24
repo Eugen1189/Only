@@ -99,7 +99,7 @@ const OrbitalMobileInterface = () => {
       {/* --- BOTTOM PANEL (Voice input) --- */}
       <footer className="p-8 flex flex-col items-center gap-4 z-20">
         <p className="text-white/50 text-sm font-medium animate-pulse">
-          "Generate a cyberpunk city..."
+          &ldquo;Generate a cyberpunk city...&rdquo;
         </p>
         
         {/* Main action button */}
