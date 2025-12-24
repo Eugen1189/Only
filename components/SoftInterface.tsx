@@ -282,8 +282,8 @@ export default function SoftInterface() {
                   >
                     {/* Try local video first */}
                     <source src="/assets/brain-video.mp4" type="video/mp4" />
-                    {/* Fallback to public AI-themed video - smaller file */}
-                    <source src="https://videos.pexels.com/video-files/3045163/3045163-uhd_2560_1440_30fps.mp4" type="video/mp4" />
+                    {/* Fallback - will use CSS animation if this also fails */}
+                    <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
                   </video>
                 )}
                 
@@ -327,13 +327,13 @@ export default function SoftInterface() {
                       {[...Array(20)].map((_, i) => (
                         <motion.div
                           key={i}
-                          className="absolute w-1 h-1 bg-white/30 rounded-full"
+                          className="absolute w-1 h-1 bg-white/40 rounded-full"
                           style={{
                             left: `${Math.random() * 100}%`,
                             top: `${Math.random() * 100}%`,
                           }}
                           animate={{
-                            opacity: [0.3, 0.8, 0.3],
+                            opacity: [0.2, 0.8, 0.2],
                             scale: [1, 1.5, 1],
                           }}
                           transition={{
