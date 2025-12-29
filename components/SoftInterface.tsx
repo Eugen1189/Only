@@ -11,6 +11,9 @@ import { AudioVisualizer } from "@/utils/audioVisualizer";
 import ParticleSystem from "@/components/ParticleSystem";
 import GlowEffect from "@/components/GlowEffect";
 import VideoCanvas from "@/components/VideoCanvas";
+import ThoughtStream from "@/components/ThoughtStream";
+import { soundManager } from "@/utils/sound";
+import AuraSphere from "@/components/AuraSphere";
 
 type AppState = "idle" | "listening" | "processing" | "speaking";
 
@@ -22,16 +25,16 @@ interface SoftButtonProps {
 
 // Soft Glass button style with haptic feedback
 const SoftButton = ({ icon, label, onClick }: SoftButtonProps) => (
-  <button 
-    className="flex flex-col items-center gap-2 group touch-manipulation"
+  <button
+    className="flex flex-col items-center gap-2 group touch-manipulation p-4 -m-4"
     onClick={(e) => {
       e.preventDefault();
       triggerHaptic(hapticPatterns.click);
+      soundManager.playClick();
       onClick?.();
     }}
     onTouchStart={(e) => {
       // Trigger haptic on touch start for better mobile experience
-      e.preventDefault();
       triggerHaptic(hapticPatterns.click);
     }}
   >
@@ -46,10 +49,11 @@ export default function SoftInterface() {
   // --- GLOW SPOT LOGIC (Fixed for Vercel) ---
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  
+
   // Use state to ensure code runs on client
   const [mounted, setMounted] = useState(false);
   const [appState, setAppState] = useState<AppState>("idle");
+  const [inboxMood, setInboxMood] = useState<"calm" | "urgent" | "opportunity">("calm");
   const [audioVolume, setAudioVolume] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [videoError, setVideoError] = useState(false);
@@ -68,14 +72,14 @@ export default function SoftInterface() {
 
   useEffect(() => {
     setMounted(true);
-    
+
     // Check if browser APIs are available
     if (typeof window === "undefined") return;
-    
+
     const handleMove = (e: PointerEvent | TouchEvent) => {
       const clientX = 'touches' in e ? e.touches[0]?.clientX : e.clientX;
       const clientY = 'touches' in e ? e.touches[0]?.clientY : e.clientY;
-      
+
       if (clientX !== undefined && clientY !== undefined) {
         mouseX.set(clientX);
         mouseY.set(clientY);
@@ -86,7 +90,7 @@ export default function SoftInterface() {
     window.addEventListener("pointermove", handleMove as EventListener);
     window.addEventListener("touchmove", handleMove as EventListener);
     window.addEventListener("touchstart", handleMove as EventListener);
-    
+
     return () => {
       window.removeEventListener("pointermove", handleMove as EventListener);
       window.removeEventListener("touchmove", handleMove as EventListener);
@@ -99,6 +103,9 @@ export default function SoftInterface() {
     if (listening) {
       setAppState("listening");
       triggerHaptic(hapticPatterns.listening);
+      soundManager.startHum();
+    } else {
+      soundManager.stopHum();
     }
   }, [listening]);
 
@@ -132,10 +139,25 @@ export default function SoftInterface() {
     }
   }, [appState]);
 
+  // Simulate Mood Changes (Demo Mode)
+  useEffect(() => {
+    const moods: ("calm" | "urgent" | "opportunity")[] = ["calm", "urgent", "opportunity", "calm"];
+    let i = 0;
+    const interval = setInterval(() => {
+      setInboxMood((prev) => {
+        const r = Math.random();
+        if (r > 0.6) return "urgent";
+        if (r > 0.3) return "opportunity";
+        return "calm";
+      });
+    }, 8000); // Change mood every 8s
+    return () => clearInterval(interval);
+  }, []);
+
   // Audio visualization
   useEffect(() => {
     if (!mounted || !speechMounted || typeof navigator === "undefined" || !navigator.mediaDevices) return;
-    
+
     if (appState === "listening" && browserSupportsSpeechRecognition) {
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then((stream) => {
@@ -186,11 +208,17 @@ export default function SoftInterface() {
     [1, 1.15]
   );
 
+  // Parallax background effects (Antigravity)
+  const bgX1 = useTransform(mouseX, [0, 2000], [-50, 50]);
+  const bgY1 = useTransform(mouseY, [0, 1000], [-50, 50]);
+  const bgX2 = useTransform(mouseX, [0, 2000], [50, -50]);
+  const bgY2 = useTransform(mouseY, [0, 1000], [50, -50]);
+
   // Video removed - using Canvas instead
 
   const handleMicClick = () => {
     if (!mounted || typeof window === "undefined") return;
-    
+
     if (!browserSupportsSpeechRecognition) {
       alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.");
       return;
@@ -210,34 +238,43 @@ export default function SoftInterface() {
     }
   };
 
-  // Get sphere color based on state
+  // Get sphere color based on state AND mood
   const getSphereColor = () => {
-    switch (appState) {
-      case "listening":
-        return "rgba(239, 68, 68, 0.3)"; // Red
-      case "processing":
-        return "rgba(139, 92, 246, 0.4)"; // Purple
-      case "speaking":
-        return "rgba(59, 130, 246, 0.3)"; // Blue
+    if (appState === "listening") return "rgba(16, 185, 129, 0.4)"; // Green (Active Listening)
+    if (appState === "processing") return "rgba(255, 255, 255, 0.6)"; // White (Processing)
+
+    // Passive Mood Colors
+    switch (inboxMood) {
+      case "urgent":
+        return "rgba(239, 68, 68, 0.5)"; // Red (Stress)
+      case "opportunity":
+        return "rgba(234, 179, 8, 0.5)"; // Gold (Opportunity)
+      case "calm":
       default:
-        return "rgba(139, 92, 246, 0.15)"; // Default purple
+        return "rgba(56, 189, 248, 0.4)"; // Cyan/Blue (Calm)
     }
   };
 
   return (
     <div className="relative w-full h-[100dvh] bg-gradient-to-b from-[#1e293b] via-[#0f172a] to-[#020617] text-white overflow-hidden flex flex-col items-center justify-between font-sans selection:bg-purple-300/30">
-      
+
       {/* GLOW EFFECT - Must be first, z-[1] to be above background but below content */}
       <GlowEffect />
 
-      {/* ATMOSPHERE (Aurora) - Static background spots - z-0 */}
-      <div className="absolute top-[-10%] left-[-20%] w-[400px] h-[400px] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none z-0" />
-      <div className="absolute bottom-[-10%] right-[-20%] w-[300px] h-[300px] bg-blue-500/20 blur-[100px] rounded-full pointer-events-none z-0" />
-      
+      {/* ATMOSPHERE (Aurora) - Floating background spots - z-0 */}
+      <motion.div
+        style={{ x: bgX1, y: bgY1 }}
+        className="absolute top-[-10%] left-[-20%] w-[400px] h-[400px] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none z-0"
+      />
+      <motion.div
+        style={{ x: bgX2, y: bgY2 }}
+        className="absolute bottom-[-10%] right-[-20%] w-[300px] h-[300px] bg-blue-500/20 blur-[100px] rounded-full pointer-events-none z-0"
+      />
+
       {/* NOISE (Grain) - z-0 */}
-      <div 
+      <div
         className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay z-0"
-        style={{ 
+        style={{
           backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")',
           backgroundRepeat: 'repeat',
           backgroundSize: '200px 200px'
@@ -251,13 +288,16 @@ export default function SoftInterface() {
       <header className="relative w-full p-6 flex justify-between items-center z-20">
         <div className="flex items-center gap-2">
           <div className="p-2 bg-white/10 rounded-full backdrop-blur-md shadow-sm border border-white/20">
-             <Sparkles size={14} className="text-purple-200" />
+            <Sparkles size={14} className="text-purple-200" />
           </div>
-          <span className="font-semibold tracking-wide text-sm text-purple-100/80">LEGALMIND</span>
+          <span className="font-semibold tracking-wide text-sm text-purple-100/80">AURAMAIL</span>
         </div>
-        <button 
+        <button
           className="p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md border border-white/20 transition-colors"
-          onClick={() => triggerHaptic(hapticPatterns.click)}
+          onClick={() => {
+            triggerHaptic(hapticPatterns.click);
+            soundManager.playClick();
+          }}
         >
           <Menu size={20} className="text-white/90" />
         </button>
@@ -267,207 +307,143 @@ export default function SoftInterface() {
       <div className="relative flex items-center justify-center flex-1 w-full z-10">
         <div className="relative w-[340px] h-[340px] flex items-center justify-center">
 
-            {/* VIDEO CORE with state-based styling */}
-            <motion.div 
-              className="absolute w-[260px] h-[260px] rounded-full overflow-hidden border border-white/20 z-10 ring-1 ring-white/10"
+          {/* THOUGHT STREAM - Legal Data Visualization */}
+          <ThoughtStream appState={appState} />
+
+          {/* VIDEO CORE with state-based styling */}
+          <motion.div
+            className="absolute w-[260px] h-[260px] rounded-full overflow-hidden border border-white/20 z-10 ring-1 ring-white/10"
+            style={{
+              scale: sphereScale,
+              boxShadow: `0 0 60px ${getSphereColor()}`,
+            }}
+          >
+            <AuraSphere mood={inboxMood} />
+
+            <div
+              className="absolute inset-0"
               style={{
-                scale: sphereScale,
-                boxShadow: `0 0 60px ${getSphereColor()}`,
+                background: 'radial-gradient(circle, transparent 0%, transparent 50%, rgba(15, 23, 42, 0.9) 100%)'
+              }}
+            />
+          </motion.div>
+
+          {/* TRANSCRIPT OVERLAY */}
+          {transcript && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute top-[-60px] left-1/2 -translate-x-1/2 z-30 bg-black/60 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10 max-w-[280px] text-center"
+            >
+              <p className="text-sm text-white/90">{transcript}</p>
+            </motion.div>
+          )}
+
+          {/* STATE INDICATOR */}
+          {appState !== "idle" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 z-30"
+            >
+              <span className="text-xs text-purple-200/60 uppercase tracking-wider">
+                {appState === "listening" && "Capturing Thought..."}
+                {appState === "processing" && "Filtering Noise..."}
+                {appState === "speaking" && "Drafting Reply..."}
+              </span>
+            </motion.div>
+          )}
+
+          {/* ORBITAL BUTTONS - Dynamic Layout */}
+          {[
+            { icon: <MessageSquare size={20} />, label: "Digest", pos: "top-0 left-0", delay: 0.1, x: "-10%", y: "-10%" },
+            { icon: <ImageIcon size={20} />, label: "Vault", pos: "top-0 right-0", delay: 0.2, x: "10%", y: "-10%" },
+            { icon: <Music size={20} />, label: "Flow", pos: "bottom-0 left-0", delay: 0.3, x: "-10%", y: "10%" },
+            { icon: <Settings size={20} />, label: "Modes", pos: "bottom-0 right-0", delay: 0.4, x: "10%", y: "10%" },
+          ].map((btn, i) => (
+            <motion.div
+              key={i}
+              className={`absolute z-20 ${btn.pos}`}
+              initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                x: btn.x,
+                y: btn.y
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+                delay: 0.5 + btn.delay
               }}
             >
-                {!videoError ? (
-                  <video 
-                    ref={videoRef}
-                    autoPlay 
-                    loop 
-                    muted 
-                    playsInline
-                    preload="auto"
-                    className="w-full h-full object-cover scale-110 opacity-90 mix-blend-screen"
-                    onError={(e) => {
-                      console.warn('Video load error, using Canvas fallback');
-                      setVideoError(true);
-                    }}
-                    onLoadedData={() => {
-                      // Video loaded successfully, try to play
-                      if (videoRef.current) {
-                        videoRef.current.play().catch((err) => {
-                          console.warn('Video autoplay failed:', err);
-                          setVideoError(true);
-                        });
-                      }
-                    }}
-                  >
-                    <source src="/assets/document_5359566328627760596.mp4" type="video/mp4" />
-                  </video>
-                ) : (
-                  // Canvas fallback - shows if video fails to load
-                  <VideoCanvas 
-                    width={260} 
-                    height={260} 
-                    className="w-full h-full opacity-90"
-                  />
-                )}
-                
-                {/* Old CSS fallback - kept as backup but disabled */}
-                {false && (
-                  <motion.div 
-                    className="w-full h-full bg-gradient-to-br from-purple-900/40 to-indigo-900/40 relative overflow-hidden"
-                    animate={{
-                      scale: [1, 1.02, 1],
-                      rotate: [0, 2, -2, 0]
-                    }}
-                    transition={{
-                      duration: 8,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    {/* Animated gradient background */}
-                    <div className="absolute inset-0 bg-[conic-gradient(at_center,_var(--tw-gradient-stops))] from-purple-900 via-transparent to-blue-900 animate-spin-slow opacity-40" style={{animationDuration: '10s'}} />
-                    
-                    {/* Central glowing orb */}
-                    <div className="absolute inset-10 bg-gradient-to-br from-purple-500/30 to-blue-500/30 rounded-full blur-2xl animate-pulse" />
-                    
-                    {/* Inner sphere with depth */}
-                    <div className="absolute inset-16 bg-gradient-to-tr from-purple-600/20 via-transparent to-blue-600/20 rounded-full blur-xl" />
-                    
-                    {/* Shimmer effect */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                      animate={{
-                        x: ['-100%', '100%']
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
-                    />
-                    
-                    {/* Particle dots */}
-                    <div className="absolute inset-0">
-                      {[...Array(20)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          className="absolute w-1 h-1 bg-white/40 rounded-full"
-                          style={{
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
-                          }}
-                          animate={{
-                            opacity: [0.2, 0.8, 0.2],
-                            scale: [1, 1.5, 1],
-                          }}
-                          transition={{
-                            duration: 2 + Math.random() * 2,
-                            repeat: Infinity,
-                            delay: Math.random() * 2,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-                
-                <div 
-                  className="absolute inset-0"
-                  style={{
-                    background: 'radial-gradient(circle, transparent 0%, transparent 50%, rgba(15, 23, 42, 0.9) 100%)'
-                  }}
-                />
+              <motion.div
+                animate={{ y: [0, -5, 0] }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: i * 0.5
+                }}
+              >
+                <SoftButton icon={btn.icon} label={btn.label} />
+              </motion.div>
             </motion.div>
-
-            {/* TRANSCRIPT OVERLAY */}
-            {transcript && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="absolute top-[-60px] left-1/2 -translate-x-1/2 z-30 bg-black/60 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10 max-w-[280px] text-center"
-              >
-                <p className="text-sm text-white/90">{transcript}</p>
-              </motion.div>
-            )}
-
-            {/* STATE INDICATOR */}
-            {appState !== "idle" && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 z-30"
-              >
-                <span className="text-xs text-purple-200/60 uppercase tracking-wider">
-                  {appState === "listening" && "Listening..."}
-                  {appState === "processing" && "Processing..."}
-                  {appState === "speaking" && "Speaking..."}
-                </span>
-              </motion.div>
-            )}
-
-            {/* BUTTONS */}
-            <div className="absolute top-0 left-0 z-20 transform -translate-x-2 -translate-y-2">
-              <SoftButton icon={<MessageSquare size={20} />} label="Chat" />
-            </div>
-            <div className="absolute top-0 right-0 z-20 transform translate-x-2 -translate-y-2">
-              <SoftButton icon={<ImageIcon size={20} />} label="Imagine" />
-            </div>
-            <div className="absolute bottom-0 left-0 z-20 transform -translate-x-2 translate-y-2">
-              <SoftButton icon={<Music size={20} />} label="Audio" />
-            </div>
-            <div className="absolute bottom-0 right-0 z-20 transform translate-x-2 translate-y-2">
-              <SoftButton icon={<Settings size={20} />} label="Config" />
-            </div>
+          ))}
         </div>
       </div>
 
       {/* FOOTER - z-20 */}
       <div className="relative w-full pb-10 flex flex-col items-center gap-6 z-20 px-6">
-          <div className="text-center space-y-1">
-              <h1 className="text-2xl font-semibold text-white/90">Good Morning</h1>
-              <p className="text-purple-200/50 text-sm">
-                {appState === "idle" && "System ready for interaction"}
-                {appState === "listening" && "Listening to you..."}
-                {appState === "processing" && "Processing your request..."}
-                {appState === "speaking" && "AI is responding..."}
-              </p>
-          </div>
+        <div className="text-center space-y-1">
+          <h1 className="text-2xl font-semibold text-white/90">Inbox Harmony</h1>
+          <p className="text-purple-200/50 text-sm flex items-center justify-center gap-2">
+            {appState === "idle" && "All systems synced. Zero unread."}
+            {appState === "listening" && (
+              audioVolume > 0 && audioVolume < 0.1
+                ? <><span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" /> Whisper Mode Active</>
+                : "Listening to command..."
+            )}
+            {appState === "processing" && "Sorting your inbox..."}
+            {appState === "speaking" && "Assistant active..."}
+          </p>
+        </div>
 
-          {/* Microphone button */}
-          <button 
-            className={`w-full max-w-sm h-16 rounded-[2rem] p-[1px] shadow-[0_4px_20px_rgba(0,0,0,0.2)] active:scale-95 transition-transform touch-manipulation ${
-              listening 
-                ? "bg-gradient-to-r from-red-400/40 to-pink-400/40" 
-                : "bg-gradient-to-r from-purple-400/30 to-blue-400/30"
+        {/* Microphone button */}
+        <button
+          className={`w-full max-w-sm h-16 rounded-[2rem] p-[1px] shadow-[0_4px_20px_rgba(0,0,0,0.2)] active:scale-95 transition-transform touch-manipulation ${listening
+            ? "bg-gradient-to-r from-red-400/40 to-pink-400/40"
+            : "bg-gradient-to-r from-purple-400/30 to-blue-400/30"
             }`}
-            onClick={(e) => {
-              e.preventDefault();
-              handleMicClick();
-            }}
-            onTouchStart={(e) => {
-              // Trigger haptic on touch start
-              e.preventDefault();
-              triggerHaptic(hapticPatterns.click);
-            }}
-          >
-              <div className="w-full h-full rounded-[2rem] bg-[#1e293b]/60 backdrop-blur-xl flex items-center px-4 relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-white/5 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500" />
-                  
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
-                    listening 
-                      ? "bg-gradient-to-br from-red-500 to-pink-600 animate-pulse" 
-                      : "bg-gradient-to-br from-purple-500 to-indigo-600"
-                  }`}>
-                      <Mic size={18} className="text-white" />
-                  </div>
-                  <span className="flex-1 text-center text-sm font-medium text-white/90">
-                    {listening ? "Listening..." : "Tap to speak..."}
-                  </span>
-                  <div className="w-10 flex justify-center gap-1 opacity-50">
-                      <div className={`w-1 h-1 bg-white rounded-full ${listening ? "animate-pulse" : ""}`} style={{ animationDelay: '0ms' }} />
-                      <div className={`w-1 h-1 bg-white rounded-full ${listening ? "animate-pulse" : ""}`} style={{ animationDelay: '100ms' }} />
-                  </div>
-              </div>
-          </button>
+          onClick={(e) => {
+            e.preventDefault();
+            handleMicClick();
+            soundManager.playClick('sci-fi');
+          }}
+          onTouchStart={(e) => {
+            // Trigger haptic on touch start
+            triggerHaptic(hapticPatterns.click);
+          }}
+        >
+          <div className="w-full h-full rounded-[2rem] bg-[#1e293b]/60 backdrop-blur-xl flex items-center px-4 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-white/5 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500" />
+
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${listening
+              ? "bg-gradient-to-br from-red-500 to-pink-600 animate-pulse"
+              : "bg-gradient-to-br from-purple-500 to-indigo-600"
+              }`}>
+              <Mic size={18} className="text-white" />
+            </div>
+            <span className="flex-1 text-center text-sm font-medium text-white/90">
+              {listening ? "Listening..." : "Voice Command"}
+            </span>
+            <div className="w-10 flex justify-center gap-1 opacity-50">
+              <div className={`w-1 h-1 bg-white rounded-full ${listening ? "animate-pulse" : ""}`} style={{ animationDelay: '0ms' }} />
+              <div className={`w-1 h-1 bg-white rounded-full ${listening ? "animate-pulse" : ""}`} style={{ animationDelay: '100ms' }} />
+            </div>
+          </div>
+        </button>
       </div>
 
     </div>
